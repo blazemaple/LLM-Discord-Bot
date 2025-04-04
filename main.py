@@ -2,127 +2,98 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import yt_dlp
-import asyncio
+import certifi
 
 # 加載環境變量
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
+# 設置證書路徑
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 # 設置機器人前綴和意圖
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
+intents.presences = True
 bot = commands.Bot(command_prefix='!', intents=intents)
-
-# 音樂隊列
-queue = []
 
 # 當機器人準備就緒時
 @bot.event
 async def on_ready():
     print(f'{bot.user} 已上線！')
+    # 加載音樂 Cog
+    try:
+        await bot.load_extension('cogs.music')
+        print('音樂模組已加載！')
+    except Exception as e:
+        print(f'加載音樂模組時發生錯誤: {str(e)}')
 
-# 播放音樂命令
+# 重新加載命令
 @bot.command()
-async def play(ctx, *, url):
-    # 檢查用戶是否在語音頻道中
-    if not ctx.author.voice:
-        await ctx.send("請先加入一個語音頻道！")
-        return
-
-    # 加入語音頻道
-    channel = ctx.author.voice.channel
-    if not ctx.voice_client:
-        await channel.connect()
-    elif ctx.voice_client.channel != channel:
-        await ctx.voice_client.move_to(channel)
-
-    # 使用yt-dlp獲取音頻信息
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-    }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
-            info = ydl.extract_info(url, download=False)
-            url2 = info['url']
-            title = info['title']
+@commands.has_permissions(administrator=True)
+async def reload(ctx, module: str = None):
+    """重新加載指定模組或所有模組（僅管理員可用）
+    
+    參數:
+        module: 要重新加載的模組名稱（可選）。不指定則重新加載所有模組。
+        例如: music, admin 等
+    """
+    try:
+        if module:
+            # 重新加載指定模組
+            module_path = f'cogs.{module.lower()}'
+            try:
+                await bot.reload_extension(module_path)
+                await ctx.send(f"✅ 模組 '{module}' 已重新加載！")
+            except commands.ExtensionNotLoaded:
+                # 如果模組未加載，嘗試加載它
+                try:
+                    await bot.load_extension(module_path)
+                    await ctx.send(f"✅ 模組 '{module}' 已加載！")
+                except Exception as e:
+                    await ctx.send(f"❌ 加載模組 '{module}' 時發生錯誤：{str(e)}")
+            except Exception as e:
+                await ctx.send(f"❌ 重新加載模組 '{module}' 時發生錯誤：{str(e)}")
+        else:
+            # 重新加載所有模組
+            success = []
+            failed = []
             
-            # 添加到隊列
-            queue.append((url2, title))
+            # 獲取所有已加載的擴展
+            extensions = list(bot.extensions.keys())
             
-            if len(queue) == 1:
-                await play_next(ctx)
-            else:
-                await ctx.send(f"已將 {title} 添加到隊列中！")
-                
-        except Exception as e:
-            await ctx.send(f"發生錯誤：{str(e)}")
+            # 重新加載每個擴展
+            for ext in extensions:
+                try:
+                    await bot.reload_extension(ext)
+                    success.append(ext.split('.')[-1])
+                except Exception as e:
+                    failed.append(f"{ext.split('.')[-1]} ({str(e)})")
+            
+            # 準備響應消息
+            response = []
+            if success:
+                response.append(f"✅ 已重新加載的模組: {', '.join(success)}")
+            if failed:
+                response.append(f"❌ 重新加載失敗的模組: {', '.join(failed)}")
+            
+            await ctx.send('\n'.join(response) if response else "❌ 沒有找到可重新加載的模組")
+            
+    except Exception as e:
+        print(f"重新加載時發生錯誤: {str(e)}")
+        await ctx.send(f"❌ 重新加載時發生錯誤：{str(e)}")
 
-# 播放下一首歌曲
-async def play_next(ctx):
-    if not queue:
-        return
-
-    url, title = queue[0]
-    
-    # 播放音頻
-    FFMPEG_OPTIONS = {
-        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-        'options': '-vn'
-    }
-    
-    ctx.voice_client.play(
-        discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS),
-        after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx), bot.loop)
-    )
-    
-    await ctx.send(f"正在播放：{title}")
-    queue.pop(0)
-
-# 跳過當前歌曲
-@bot.command()
-async def skip(ctx):
-    if ctx.voice_client.is_playing():
-        ctx.voice_client.stop()
-        await ctx.send("已跳過當前歌曲！")
+# 錯誤處理
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ 您沒有權限執行此命令！")
+    elif isinstance(error, commands.CommandNotFound):
+        await ctx.send("❌ 找不到此命令！")
     else:
-        await ctx.send("目前沒有在播放音樂！")
-
-# 停止播放並清空隊列
-@bot.command()
-async def stop(ctx):
-    if ctx.voice_client.is_playing():
-        ctx.voice_client.stop()
-    queue.clear()
-    await ctx.send("已停止播放並清空隊列！")
-
-# 顯示隊列
-@bot.command()
-async def queue_list(ctx):
-    if not queue:
-        await ctx.send("隊列為空！")
-        return
-    
-    message = "當前隊列：\n"
-    for i, (_, title) in enumerate(queue, 1):
-        message += f"{i}. {title}\n"
-    
-    await ctx.send(message)
-
-# 斷開連接
-@bot.command()
-async def disconnect(ctx):
-    if ctx.voice_client:
-        await ctx.voice_client.disconnect()
-        await ctx.send("已斷開連接！")
-    else:
-        await ctx.send("機器人不在語音頻道中！")
+        print(f"命令執行錯誤: {str(error)}")
+        await ctx.send(f"❌ 發生錯誤：{str(error)}")
 
 # 運行機器人
 bot.run(TOKEN) 

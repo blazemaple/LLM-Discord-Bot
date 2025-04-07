@@ -28,6 +28,12 @@ async def on_ready():
         print('音樂模組已加載！')
     except Exception as e:
         print(f'加載音樂模組時發生錯誤: {str(e)}')
+    # 加載 LLM 聊天 Cog
+    try:
+        await bot.load_extension('cogs.llm_chat')
+        print('LLM 聊天模組已加載！')
+    except Exception as e:
+        print(f'加載 LLM 聊天模組時發生錯誤: {str(e)}')
 
 # 重新加載命令
 @bot.command()
@@ -44,15 +50,12 @@ async def reload(ctx, module: str = None):
             # 重新加載指定模組
             module_path = f'cogs.{module.lower()}'
             try:
-                await bot.reload_extension(module_path)
-                await ctx.send(f"✅ 模組 '{module}' 已重新加載！")
+                await bot.unload_extension(module_path)
             except commands.ExtensionNotLoaded:
-                # 如果模組未加載，嘗試加載它
-                try:
-                    await bot.load_extension(module_path)
-                    await ctx.send(f"✅ 模組 '{module}' 已加載！")
-                except Exception as e:
-                    await ctx.send(f"❌ 加載模組 '{module}' 時發生錯誤：{str(e)}")
+                pass  # 如果未加載，忽略錯誤
+            try:
+                await bot.load_extension(module_path)
+                await ctx.send(f"✅ 模組 '{module}' 已重新加載！")
             except Exception as e:
                 await ctx.send(f"❌ 重新加載模組 '{module}' 時發生錯誤：{str(e)}")
         else:
@@ -96,4 +99,4 @@ async def on_command_error(ctx, error):
         await ctx.send(f"❌ 發生錯誤：{str(error)}")
 
 # 運行機器人
-bot.run(TOKEN) 
+bot.run(TOKEN)

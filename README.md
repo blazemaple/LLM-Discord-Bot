@@ -37,7 +37,7 @@
 
 2. 克隆專案：
    ```bash
-   git clone [你的倉庫URL]
+   git clone https://github.com/blazemaple/lycoreco_bot
    cd lycoreco_bot
    ```
 
@@ -106,6 +106,33 @@
 - 機器人需要適當的 Discord 權限才能正常運作
 - 建議定期更新依賴包以獲得最佳體驗
 
+## 🤖 LLM 聊天與自然語言控制
+
+本機器人整合了大型語言模型（LLM），支援自然語言對話與控制音樂播放。
+
+### 功能特色
+- 直接 @提及機器人，輸入自然語言即可對話
+- 自然語言指令自動轉換為音樂控制命令
+- 支援：
+  - 播放音樂：「幫我播放 Not Like Us」
+  - 跳過歌曲：「跳過這首」
+  - 暫停播放：「暫停音樂」
+  - 繼續播放：「繼續播放」
+  - 停止播放：「停止音樂」
+  - 加入語音：「加入語音頻道」
+- 無需輸入 `!play`、`!skip` 等命令，機器人會自動識別並執行
+
+### 切換 LLM 模型
+- 使用 `!model` 指令查詢當前模型
+- 使用 `!model 模型名稱` 切換模型（如 `deepseek/deepseek-chat:free` 或 `google/gemini-2.5-pro-exp-03-25:free`）
+
+### 環境變數
+`.env` 文件需包含：
+```
+DISCORD_TOKEN=你的Discord機器人Token
+OPENAI_API_KEY=你的OpenRouter API金鑰
+```
+
 ## 🔄 更新日誌
 
 ### 最新版本
@@ -113,6 +140,9 @@
 - 優化音樂搜索體驗
 - 改進錯誤處理機制
 - 新增 musichelp 指令
+- **整合 LLM 聊天與自然語言控制音樂功能**
+- **支援 `/model` 指令切換 LLM 模型**
+- **支援 tmux 後台運行**
 
 ## 貢獻
 
@@ -120,4 +150,4 @@
 
 ## 授權
 
-MIT License 
+MIT License

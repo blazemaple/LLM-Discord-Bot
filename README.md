@@ -37,7 +37,7 @@
 
 2. 克隆專案：
    ```bash
-   git clone https://github.com/blazemaple/lycoreco_bot
+   git clone https://github.com/blazemaple/LycoReco_Bot.git
    cd lycoreco_bot
    ```
 
@@ -51,9 +51,15 @@
    uv pip install -r requirements.txt
    ```
 
-4. 創建 `.env` 文件並設置 Discord Token：
+4. 創建 `.env` 文件並設置 Token：
    ```
    DISCORD_TOKEN=你的機器人Token
+   OPENAI_API_KEY=你的OpenRouter API金鑰
+   ```
+
+5. 執行：
+   ```
+   python main.py
    ```
 
 ## 🎮 使用方法
@@ -125,13 +131,6 @@
 ### 切換 LLM 模型
 - 使用 `!model` 指令查詢當前模型
 - 使用 `!model 模型名稱` 切換模型（如 `deepseek/deepseek-chat:free` 或 `google/gemini-2.5-pro-exp-03-25:free`）
-
-### 環境變數
-`.env` 文件需包含：
-```
-DISCORD_TOKEN=你的Discord機器人Token
-OPENAI_API_KEY=你的OpenRouter API金鑰
-```
 
 ## 🔄 更新日誌
 

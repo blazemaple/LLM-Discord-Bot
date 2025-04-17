@@ -1,6 +1,6 @@
-# Lycoreco Discord 音樂機器人
+# LLM Discord 智能機器人
 
-一個功能豐富的 Discord 音樂機器人，支持 YouTube 音樂播放、搜索和隊列管理。
+一個功能豐富的 LLM Discord 智能機器人，支持自然語言對話、網路搜尋、YouTube 音樂播放、搜索和隊列管理。
 
 ## ✨ 特色功能
 
@@ -13,7 +13,7 @@
 
 ## 🔧 環境要求
 
-- Python 3.8 或更高版本
+- Python 3.12 或更高版本
 - FFmpeg（系統級依賴）
 - Discord Bot Token
 - 以下 Python 包：
@@ -54,7 +54,8 @@
 4. 創建 `.env` 文件並設置 Token：
    ```
    DISCORD_TOKEN=你的機器人Token
-   OPENAI_API_KEY=你的OpenRouter API金鑰
+   GOOGLE_API_KEY=你的GOOGLE API金鑰
+   GOOGLE_CSE_ID=你的Google Search Engine ID
    ```
 
 5. 執行：
@@ -89,6 +90,12 @@
 1. 輸入關鍵字，機器人會返回前5個搜索結果
 2. 使用表情符號（1️⃣-5️⃣）選擇要播放的歌曲
 3. 機器人會自動播放所選歌曲或將其加入隊列
+
+### 網頁摘要功能
+
+- 使用 `summarize_url` 方法，機器人會自動擷取網頁內容並生成摘要。
+- 搜尋功能 `search_web` 現在完全依賴 `summarize_url` 來處理搜尋到的網址，確保摘要的一致性與準確性。
+- 支援多語言網頁的摘要擷取，並自動過濾無關內容。
 
 ## 🛠️ 故障排除
 
@@ -128,10 +135,6 @@
   - 加入語音：「加入語音頻道」
 - 無需輸入 `!play`、`!skip` 等命令，機器人會自動識別並執行
 
-### 切換 LLM 模型
-- 使用 `!model` 指令查詢當前模型
-- 使用 `!model 模型名稱` 切換模型（如 `deepseek/deepseek-chat:free` 或 `google/gemini-2.5-pro-exp-03-25:free`）
-
 ## 🔄 更新日誌
 
 ### 最新版本
@@ -140,8 +143,7 @@
 - 改進錯誤處理機制
 - 新增 musichelp 指令
 - **整合 LLM 聊天與自然語言控制音樂功能**
-- **支援 `/model` 指令切換 LLM 模型**
-- **支援 tmux 後台運行**
+- **網頁搜索功能**
 
 ## 貢獻
 

@@ -10,6 +10,18 @@ class Music(commands.Cog):
         self.queue = deque()
         self.volume = 0.5  # 默認音量 50%
         self.search_results = {}  # 用於存儲每個消息ID對應的搜索結果
+        # 自動推薦開關
+        self.auto_recommend = False
+        # 預設推薦歌曲列表（備用）
+        self.recommend_list = [
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  # Rickroll
+            "https://www.youtube.com/watch?v=3JZ_D3ELwOQ",  # Numb
+            "https://www.youtube.com/watch?v=kXYiU_JCYtU",  # In The End
+            "https://www.youtube.com/watch?v=Zi_XLOBDo_Y",  # Billie Jean
+            "https://www.youtube.com/watch?v=9bZkp7q19f0"   # Gangnam Style
+        ]
+        # 上一首歌曲標題
+        self.last_song_title = None
         
     def format_duration(self, seconds):
         hours = int(seconds // 3600)
@@ -155,6 +167,9 @@ class Music(commands.Cog):
             current_song = self.queue[0]
             audio_url, title = current_song
 
+            # 記錄當前歌曲標題
+            self.last_song_title = title
+
             FFMPEG_OPTIONS = {
                 'options': '-vn',
                 'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
@@ -185,7 +200,39 @@ class Music(commands.Cog):
         if self.queue:
             await self.play_next(ctx)
         else:
-            await ctx.send("播放結束！")
+            if self.auto_recommend and self.last_song_title:
+                try:
+                    import yt_dlp
+                    ydl_opts = {
+                        'quiet': True,
+                        'skip_download': True,
+                        'extract_flat': 'in_playlist',
+                        'default_search': 'auto',
+                        'noplaylist': True,
+                        'no_warnings': True,
+                    }
+                    query = f"ytsearch5:{self.last_song_title} 相關歌曲"
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(query, download=False)
+                        entries = info.get('entries', [])
+                        # 選擇第一個不同於上一首的推薦
+                        next_video = None
+                        for entry in entries:
+                            if entry and entry.get('title') != self.last_song_title:
+                                next_video = entry
+                                break
+                        if next_video:
+                            video_url = f"https://www.youtube.com/watch?v={next_video['id']}"
+                            title = next_video.get('title', '推薦歌曲')
+                            self.queue.append((video_url, title))
+                            await ctx.send(f"自動推薦播放：{title}")
+                            await self.play_next(ctx)
+                            return
+                except Exception as e:
+                    print(f"自動推薦時發生錯誤: {str(e)}")
+                    await ctx.send("自動推薦失敗，播放結束！")
+            else:
+                await ctx.send("播放結束！")
 
     @commands.command()
     async def volume(self, ctx, vol: float = None):
@@ -340,5 +387,22 @@ class Music(commands.Cog):
         
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def autorec(self, ctx, mode: str = None):
+        """開啟或關閉自動推薦播放 (用法: !autorec on/off)"""
+        if mode is None:
+            status = "開啟" if self.auto_recommend else "關閉"
+            await ctx.send(f"自動推薦目前狀態：{status}")
+            return
+        mode = mode.lower()
+        if mode in ["on", "開", "開啟"]:
+            self.auto_recommend = True
+            await ctx.send("已開啟自動推薦播放！")
+        elif mode in ["off", "關", "關閉"]:
+            self.auto_recommend = False
+            await ctx.send("已關閉自動推薦播放！")
+        else:
+            await ctx.send("請輸入 on/off 來開啟或關閉自動推薦。")
+
 async def setup(bot):
-    await bot.add_cog(Music(bot)) 
+    await bot.add_cog(Music(bot))

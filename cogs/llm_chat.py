@@ -5,12 +5,15 @@ from dotenv import load_dotenv
 import asyncio
 from datetime import datetime, timezone, timedelta
 import requests
+from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import initialize_agent, AgentType, Tool
 from langchain.agents.agent import AgentOutputParser
 from typing import Any, Dict
 
 load_dotenv()
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL')
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID')
 
@@ -20,12 +23,19 @@ class LlmChatCog(commands.Cog):
         self.chat_history = []
         self.last_music_command = None
 
+        # 初始化 OpenAI API 設定
+        self.model = "gpt-4o"  # 或你要用的 GitHub 代理模型名稱
+        self.temperature = 0.7
+
         # 初始化 LLM
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            google_api_key=GOOGLE_API_KEY,
-            temperature=0.7,
+        self.llm = ChatOpenAI(
+            model=self.model,
+            openai_api_key=OPENAI_API_KEY,
+            openai_api_base=OPENAI_BASE_URL,
+            temperature=self.temperature,
             streaming=False,
+            max_tokens=1000,
+            publisher="github"
         )
 
         # 註冊 tools
@@ -180,7 +190,7 @@ class LlmChatCog(commands.Cog):
         使用 Google 搜尋，參數為查詢關鍵字，回傳前幾條摘要，並自動進入網站抓取正文摘要。
         搜尋到的網址會傳遞給 summarize_url 進行文字擷取，並傳到 LLM 分析。
         """
-        if not GOOGLE_API_KEY or not GOOGLE_CSE_ID:
+        if not GOOGLE_API_KEY or GOOGLE_CSE_ID:
             return "未設定 GOOGLE_API_KEY 或 GOOGLE_CSE_ID，無法搜尋。"
         url = "https://www.googleapis.com/customsearch/v1"
         params = {
@@ -287,7 +297,13 @@ class LlmChatCog(commands.Cog):
                 if not executed:
                     await message.channel.send(response)
             except Exception as e:
-                await message.channel.send(f"❌ Agent 發生錯誤：{str(e)}")
+                import traceback
+                tb = traceback.format_exc()
+                # 取得錯誤行號
+                lineno = e.__traceback__.tb_lineno if hasattr(e, '__traceback__') else 'unknown'
+                tb_lines = tb.splitlines()[-10:]
+                tb_short = "\n".join(tb_lines)
+                await message.channel.send(f"❌ Agent 發生錯誤（第{lineno}行）：{str(e)}\n{tb_short}")
         await self.bot.process_commands(message)
 
 async def setup(bot):

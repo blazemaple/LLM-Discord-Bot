@@ -56,9 +56,19 @@ class LlmChatCog(commands.Cog):
             description="摘要網址內容。參數可以是網址，或是'問題+網址'，會回傳該網址的網頁摘要，若有問題會一併附上。"
         ))
 
+        # 加入 langchain 內建工具：維基百科、YahooFinanceNewsTool
+        from langchain_community.tools import WikipediaQueryRun
+        from langchain_community.utilities import WikipediaAPIWrapper
+        try:
+            from langchain_community.tools.yahoo_finance_news import YahooFinanceNewsTool
+            self.tools.append(YahooFinanceNewsTool())
+        except ImportError:
+            pass  # 若未安裝 langchain_community，則略過
+        self.tools.append(WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper()))
+
         # System prompt
         system_prompt = (
-            "你是一個 Discord 多功能助手，支援文字、圖片、音樂、網路搜尋與網頁摘要。\n\n"
+            "你是一個 Discord 多功能助手，可與用戶輕鬆聊天，支援文字、圖片、音樂、網路搜尋與網頁摘要。\n\n"
             "請根據用戶需求，正確選擇下列工具：\n"
             "- play：播放音樂，參數為歌名\n"
             "- skip：跳過當前歌曲\n"

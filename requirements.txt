@@ -2,8 +2,11 @@ discord.py
 python-dotenv
 openai
 langchain
+langchain-community
 beautifulsoup4
 requests
 aiohttp
 pytube
 google-generativeai
+wikipedia
+yfinance

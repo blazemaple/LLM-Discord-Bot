@@ -295,6 +295,7 @@ class LlmChatCog(commands.Cog):
                     await message.channel.send(response)
             except Exception as e:
                 await message.channel.send(f"❌ Agent 發生錯誤：{str(e)}")
+            return  # 已處理完 @mention，不需要繼續處理指令
         await self.bot.process_commands(message)
 
 async def setup(bot):

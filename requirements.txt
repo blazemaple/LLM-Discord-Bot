@@ -1,13 +1,14 @@
 discord.py
 python-dotenv
 openai
-langchain
-langchain-community
+langchain==0.3.27
+langchain-community==0.3.31
 beautifulsoup4
 requests
 aiohttp
 pytube
-google-generativeai
+google-generativeai==0.8.5
 wikipedia
 yfinance
 yt-dlp
+langchain_google_genai==2.1.12

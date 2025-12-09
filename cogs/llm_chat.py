@@ -288,12 +288,9 @@ class LlmChatCog(commands.Cog):
                             executed = True
                         else:
                             await message.channel.send(f"❌ 找不到指令 `{command_name}`，請確認。")
+                            executed = True
                     self.last_music_command = None
-                # 聊天历史
-                self.chat_history.append({"role": "user", "content": content})
-                self.chat_history.append({"role": "assistant", "content": response})
-                if len(self.chat_history) > 20:
-                    self.chat_history = self.chat_history[-20:]
+                
                 if not executed:
                     await message.channel.send(response)
             except Exception as e:

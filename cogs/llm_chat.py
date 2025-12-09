@@ -22,7 +22,7 @@ class LlmChatCog(commands.Cog):
 
         # 初始化 LLM
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model="gemini-flash-lite-latest",
             google_api_key=GOOGLE_API_KEY,
             temperature=0.7,
             streaming=False,

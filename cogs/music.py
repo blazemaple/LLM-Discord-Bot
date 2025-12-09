@@ -93,7 +93,7 @@ class Music(commands.Cog):
                 'no_warnings': True,
                 'extract_flat': True,
                 'no_check_certificates': True,
-                'ignoreerrors': True,
+                # 'ignoreerrors': True,
                 'no_color': True,
                 'no_playlist': True,
                 'no_check_formats': True,

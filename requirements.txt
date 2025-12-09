@@ -10,3 +10,4 @@ pytube
 google-generativeai
 wikipedia
 yfinance
+yt-dlp
